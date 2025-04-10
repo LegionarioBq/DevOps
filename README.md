@@ -33,5 +33,13 @@ Este script automatiza a configuração inicial de um servidor Ubuntu Server 24.
 Copie a linha abaixo e execute diretamente o comando no seu terminal:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/LegionarioBq/DevOps/main/install_base_docker.sh | bash
+    curl -sSL https://raw.githubusercontent.com/LegionarioBq/DevOps/main/install_base_docker.sh | bash
 
+```
+
+Ou
+
+```bash
+    wget -qO- https://raw.githubusercontent.com/LegionarioBq/DevOps/main/install_base_docker.sh | bash
+
+```
