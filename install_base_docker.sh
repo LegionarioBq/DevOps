@@ -46,7 +46,7 @@ else
 fi
 
 echo ""
-read -p "🔐 Deseja gerar uma chave SSH RSA 256 bits para usar em seu servidor no CI/CD? (s/n): " resposta
+read -p "🔐 Deseja gerar uma chave SSH RSA 256 bits para usar em seu servidor no CI/CD? (s/n): " resposta < /dev/tty
 
 if [[ "$resposta" =~ ^[Ss]$ ]]; then
     if ! command -v ssh-keygen &> /dev/null; then
