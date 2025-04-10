@@ -10,7 +10,7 @@ Este script automatiza a configuração inicial de um servidor Ubuntu Server 24.
 - Instalação da versão mais recente do Docker e dependências
 - Habilitação dos serviços Docker e containerd para inicialização automática
 - Verificação automática se o Docker já está instalado (evita reinstalação)
-- Geração opcional de chave SSH RSA 256 bits para uso em pipelines de CI/CD
+- Geração opcional de chave SSH RSA 2048 bits para uso em pipelines de CI/CD
 
 ---
 
