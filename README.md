@@ -33,5 +33,5 @@ Este script automatiza a configuração inicial de um servidor Ubuntu Server 24.
 Suba o script no seu GitHub e execute diretamente com:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/SEU_USUARIO/SEU_REPOSITORIO/main/instalar_base_loadbalance.sh | bash
+curl -sSL https://raw.githubusercontent.com/LegionarioBq/DevOps/main/install_base_docker.sh | bash
 
