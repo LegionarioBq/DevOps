@@ -44,3 +44,39 @@ else
     echo "✅ Docker instalado com sucesso!"
     docker --version
 fi
+
+echo ""
+read -p "🔐 Deseja gerar uma chave SSH RSA 256 bits para usar em seu servidor no CI/CD? (s/n): " resposta
+
+if [[ "$resposta" =~ ^[Ss]$ ]]; then
+    if ! command -v ssh-keygen &> /dev/null; then
+        echo "❌ Comando 'ssh-keygen' não encontrado. Instale o pacote openssh-client e tente novamente."
+        exit 1
+    fi
+
+    SSH_DIR="$HOME/.ssh"
+    KEY_NAME="id_rsa_ci_cd"
+
+    # Cria o diretório .ssh se não existir
+    mkdir -p "$SSH_DIR"
+    chmod 700 "$SSH_DIR"
+
+    # Gera a chave SSH RSA 256 bits
+    ssh-keygen -t rsa -b 256 -f "$SSH_DIR/$KEY_NAME" -N "" -C "$USER@$(hostname)"
+    chmod 600 "$SSH_DIR/$KEY_NAME"
+
+    echo ""
+    echo "🟢 Chave pública gerada com sucesso:"
+    echo "------------------------------------"
+    cat "$SSH_DIR/$KEY_NAME.pub"
+
+    echo ""
+    echo "🛑 Chave privada (guarde com segurança!):"
+    echo "----------------------------------------"
+    cat "$SSH_DIR/$KEY_NAME"
+
+    echo ""
+    echo "✅ Chave SSH salva em: $SSH_DIR/$KEY_NAME e $KEY_NAME.pub"
+else
+    echo "❌ Geração da chave SSH cancelada."
+fi

@@ -1,7 +1,6 @@
 # DevOps
 Artigos e Scripts
 
-
 # 🚀 Script de Instalação da Base com Docker
 
 Este script automatiza a configuração inicial de um servidor Ubuntu Server 24.04 LTS, incluindo:
@@ -10,6 +9,8 @@ Este script automatiza a configuração inicial de um servidor Ubuntu Server 24.
 - Definição do fuso horário (America/Sao_Paulo)
 - Instalação da versão mais recente do Docker e dependências
 - Habilitação dos serviços Docker e containerd para inicialização automática
+- Verificação automática se o Docker já está instalado (evita reinstalação)
+- Geração opcional de chave SSH RSA 256 bits para uso em pipelines de CI/CD
 
 ---
 
