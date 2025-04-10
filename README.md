@@ -2,7 +2,7 @@
 Artigos e Scripts
 
 
-# 🚀 Script de Instalação da Base Load Balance com Docker
+# 🚀 Script de Instalação da Base com Docker
 
 Este script automatiza a configuração inicial de um servidor Ubuntu Server 24.04 LTS, incluindo:
 
