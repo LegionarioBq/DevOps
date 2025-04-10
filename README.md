@@ -15,7 +15,7 @@ Este script automatiza a configuração inicial de um servidor Ubuntu Server 24.
 
 ## 📂 Arquivo
 
-**Nome do script:** `instalar_base_loadbalance.sh`
+**Nome do script:** `install_base_docker.sh`
 
 ---
 
