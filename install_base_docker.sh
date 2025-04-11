@@ -1,6 +1,7 @@
 #!/bin/bash
-
-# Script Instalar e atualizar base load balance
+# Script Instalar e atualizar Docker
+# BY Albert Andrade
+# Atualizado 11/04/2025
 
 echo "🕒 Atualizando data e fuso horário..."
 date
@@ -45,6 +46,20 @@ else
     docker --version
 fi
 
+# Verifica e instala Docker Compose manualmente (standalone)
+if ! command -v docker-compose &> /dev/null; then
+    echo "📦 Instalando Docker Compose..."
+    sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose
+
+    # Confirma a instalação
+    echo "✅ Docker Compose instalado:"
+    docker-compose --version
+else
+    echo "📦 Docker Compose já está instalado."
+    docker-compose --version
+fi
+
 echo ""
 read -p "🔐 Deseja gerar uma chave SSH RSA 2048 bits para usar em seu servidor no CI/CD? (s/n): " resposta < /dev/tty
 
@@ -60,6 +75,12 @@ if [[ "$resposta" =~ ^[Ss]$ ]]; then
     # Cria o diretório .ssh se não existir
     mkdir -p "$SSH_DIR"
     chmod 700 "$SSH_DIR"
+
+    # Verifica se já existe e pergunta se quer sobrescrever
+    if [[ -f "$SSH_DIR/$KEY_NAME" ]]; then
+        read -p "⚠️ A chave '$KEY_NAME' já existe. Deseja sobrescrever? (s/n): " overwrite < /dev/tty
+        [[ ! "$overwrite" =~ ^[Ss]$ ]] && echo "❌ Operação cancelada." && exit 0
+    fi
 
     # Gera a chave SSH RSA 2048 bits
     ssh-keygen -t rsa -b 2048 -f "$SSH_DIR/$KEY_NAME" -N "" -C "$USER@$(hostname)"
