@@ -32,7 +32,7 @@ then
     docker --version
 else
     echo "🐳 Instalando Docker Engine (última versão)..."
-    sudo apt install -y ca-certificates curl gnupg lsb-release
+    sudo apt install -y ca-certificates curl gnupg lsb-release apt-transport-https software-properties-common
 
     # Adicionando chave oficial do Docker
     sudo install -m 0755 -d /etc/apt/keyrings
@@ -40,21 +40,41 @@ else
 
     # Adicionando repositório oficial Docker
     echo \
-      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-      $(lsb_release -cs) stable" | \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+      https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
       sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
     # Atualizando e instalando Docker Engine
     sudo apt update
     sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-    echo "⚙️ Habilitando serviços do Docker..."
+    # Criar configuração de daemon otimizada para WSL2
+    echo "⚙️ Configurando Docker daemon para WSL2..."
+    sudo mkdir -p /etc/docker
+    sudo bash -c 'cat > /etc/docker/daemon.json <<EOF
+{
+  "log-driver": "json-file",
+  "log-opts": { "max-size": "10m", "max-file": "3" },
+  "storage-driver": "overlay2"
+}
+EOF'
+
+    # Habilita e inicia serviços
+    echo "⚙️ Habilitando e iniciando serviços Docker..."
     sudo systemctl enable docker
     sudo systemctl enable containerd
     sudo systemctl start docker
 
     echo "✅ Docker instalado com sucesso!"
     docker --version
+fi
+
+# ===== Testar Docker =====
+if sudo systemctl is-active --quiet docker; then
+    echo "🔍 Testando Docker Engine..."
+    sudo docker run --rm hello-world || echo "⚠️ Teste falhou, verifique logs com: sudo journalctl -u docker"
+else
+    echo "⚠️ O serviço Docker não está ativo. Verifique com: sudo systemctl status docker"
 fi
 
 # ===== Instalar Docker Compose standalone (backup) =====
