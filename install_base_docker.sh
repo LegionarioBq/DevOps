@@ -1,7 +1,7 @@
 #!/bin/bash
-# Script Instalar e atualizar Docker
+# Script Instalar e atualizar Docker (WSL2 + Ubuntu)
 # BY Albert Andrade
-# Atualizado 11/04/2025
+# Atualizado 05/10/2025
 
 echo "🕒 Atualizando data e fuso horário..."
 date
@@ -20,7 +20,7 @@ then
     echo "🐳 Docker já está instalado."
     docker --version
 else
-    echo "🐳 Instalando Docker (última versão)..."
+    echo "🐳 Instalando Docker Engine (última versão)..."
     sudo apt install -y ca-certificates curl gnupg lsb-release
 
     # Adicionando chave oficial do Docker
@@ -33,22 +33,29 @@ else
       $(lsb_release -cs) stable" | \
       sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-    # Atualizando e instalando Docker
+    # Atualizando e instalando Docker Engine
     sudo apt update
     sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-    # Habilita e inicia o serviço Docker e containerd para iniciar automaticamente com o sistema
-    sudo systemctl enable docker
-    sudo systemctl enable containerd
-    sudo systemctl start docker
+    # Detectar se systemd está rodando (WSL2 com systemd)
+    if pidof systemd &> /dev/null; then
+        echo "⚙️ Systemd detectado — ativando serviços..."
+        sudo systemctl enable docker
+        sudo systemctl enable containerd
+        sudo systemctl start docker
+    else
+        echo "⚙️ Systemd não detectado — iniciando via 'service' (modo WSL2 sem systemd)..."
+        sudo service docker start
+        sudo service containerd start
+    fi
 
     echo "✅ Docker instalado com sucesso!"
     docker --version
 fi
 
-# Verifica e instala Docker Compose manualmente (standalone)
+# Verifica e instala Docker Compose standalone (caso não esteja no PATH)
 if ! command -v docker-compose &> /dev/null; then
-    echo "📦 Instalando Docker Compose..."
+    echo "📦 Instalando Docker Compose standalone..."
     sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
     sudo chmod +x /usr/local/bin/docker-compose
 
@@ -58,6 +65,13 @@ if ! command -v docker-compose &> /dev/null; then
 else
     echo "📦 Docker Compose já está instalado."
     docker-compose --version
+fi
+
+# Permitir rodar docker sem sudo
+if groups $USER | grep -qv '\bdocker\b'; then
+    echo "👤 Adicionando usuário '$USER' ao grupo docker..."
+    sudo usermod -aG docker $USER
+    echo "⚠️ Saia e entre novamente no WSL para aplicar a permissão!"
 fi
 
 echo ""
