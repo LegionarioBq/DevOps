@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script Instalar e atualizar Docker (WSL2 + Ubuntu)
+# Script Instalar e atualizar Docker (WSL2 + Ubuntu com systemd nativo)
 # BY Albert Andrade
 # Atualizado 05/10/2025
 
@@ -14,7 +14,18 @@ sudo apt update && sudo apt upgrade -y
 sudo apt autoremove -y
 sudo apt autoclean
 
-# Verifica se o Docker já está instalado
+# ===== Ativar systemd no WSL2 =====
+if ! grep -q "systemd=true" /etc/wsl.conf 2>/dev/null; then
+    echo "⚙️ Ativando systemd no WSL2..."
+    sudo bash -c 'cat > /etc/wsl.conf <<EOF
+[boot]
+systemd=true
+EOF'
+    echo "⚠️ Systemd ativado. Execute: wsl --shutdown (no PowerShell) e reabra o Ubuntu."
+    exit 0
+fi
+
+# ===== Instalar Docker Engine =====
 if command -v docker &> /dev/null
 then
     echo "🐳 Docker já está instalado."
@@ -37,29 +48,21 @@ else
     sudo apt update
     sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-    # Detectar se systemd está rodando (WSL2 com systemd)
-    if pidof systemd &> /dev/null; then
-        echo "⚙️ Systemd detectado — ativando serviços..."
-        sudo systemctl enable docker
-        sudo systemctl enable containerd
-        sudo systemctl start docker
-    else
-        echo "⚙️ Systemd não detectado — iniciando via 'service' (modo WSL2 sem systemd)..."
-        sudo service docker start
-        sudo service containerd start
-    fi
+    echo "⚙️ Habilitando serviços do Docker..."
+    sudo systemctl enable docker
+    sudo systemctl enable containerd
+    sudo systemctl start docker
 
     echo "✅ Docker instalado com sucesso!"
     docker --version
 fi
 
-# Verifica e instala Docker Compose standalone (caso não esteja no PATH)
+# ===== Instalar Docker Compose standalone (backup) =====
 if ! command -v docker-compose &> /dev/null; then
     echo "📦 Instalando Docker Compose standalone..."
     sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
     sudo chmod +x /usr/local/bin/docker-compose
 
-    # Confirma a instalação
     echo "✅ Docker Compose instalado:"
     docker-compose --version
 else
@@ -67,13 +70,14 @@ else
     docker-compose --version
 fi
 
-# Permitir rodar docker sem sudo
+# ===== Permitir rodar docker sem sudo =====
 if groups $USER | grep -qv '\bdocker\b'; then
     echo "👤 Adicionando usuário '$USER' ao grupo docker..."
     sudo usermod -aG docker $USER
     echo "⚠️ Saia e entre novamente no WSL para aplicar a permissão!"
 fi
 
+# ===== Geração de chave SSH opcional =====
 echo ""
 read -p "🔐 Deseja gerar uma chave SSH RSA 2048 bits para usar em seu servidor no CI/CD? (s/n): " resposta < /dev/tty
 
@@ -86,31 +90,25 @@ if [[ "$resposta" =~ ^[Ss]$ ]]; then
     SSH_DIR="$HOME/.ssh"
     KEY_NAME="id_rsa_ci_cd"
 
-    # Cria o diretório .ssh se não existir
     mkdir -p "$SSH_DIR"
     chmod 700 "$SSH_DIR"
 
-    # Verifica se já existe e pergunta se quer sobrescrever
     if [[ -f "$SSH_DIR/$KEY_NAME" ]]; then
         read -p "⚠️ A chave '$KEY_NAME' já existe. Deseja sobrescrever? (s/n): " overwrite < /dev/tty
         [[ ! "$overwrite" =~ ^[Ss]$ ]] && echo "❌ Operação cancelada." && exit 0
     fi
 
-    # Gera a chave SSH RSA 2048 bits
     ssh-keygen -t rsa -b 2048 -f "$SSH_DIR/$KEY_NAME" -N "" -C "$USER@$(hostname)"
     chmod 600 "$SSH_DIR/$KEY_NAME"
 
     echo ""
     echo "🟢 Chave pública gerada com sucesso:"
-    echo "------------------------------------"
     cat "$SSH_DIR/$KEY_NAME.pub"
 
     echo ""
     echo "🛑 Chave privada (guarde com segurança!):"
-    echo "----------------------------------------"
     cat "$SSH_DIR/$KEY_NAME"
 
-    echo ""
     echo "✅ Chave SSH salva em: $SSH_DIR/$KEY_NAME e $KEY_NAME.pub"
 else
     echo "❌ Geração da chave SSH cancelada."
