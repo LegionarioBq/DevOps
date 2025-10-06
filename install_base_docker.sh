@@ -2,7 +2,7 @@
 # ==========================================================
 # Script: Instalar e atualizar Docker (WSL2 + Ubuntu com systemd nativo)
 # Autor: Albert Andrade
-# Atualizado em: 05/10/2025
+# Atualizado em: 06/10/2025
 # ==========================================================
 
 echo "🕒 Atualizando data e fuso horário..."
@@ -22,6 +22,10 @@ if ! grep -q "systemd=true" /etc/wsl.conf 2>/dev/null; then
     sudo bash -c 'cat > /etc/wsl.conf <<EOF
 [boot]
 systemd=true
+command="service docker start"
+
+[network]
+generateResolvConf=false
 EOF'
     echo "⚠️ Systemd ativado. Execute o comando abaixo no PowerShell e reabra o Ubuntu:"
     echo "    wsl --shutdown"
@@ -66,9 +70,25 @@ echo '{
 
 # ===== Habilitar e iniciar serviços =====
 echo "🚀 Habilitando e iniciando serviços..."
+sudo systemctl daemon-reload
 sudo systemctl enable docker
 sudo systemctl enable containerd
-sudo systemctl start docker
+sudo systemctl restart docker
+sudo systemctl restart containerd
+
+# ===== Corrigir permissão do socket =====
+echo "🔒 Ajustando permissão do socket Docker..."
+if [ -S /var/run/docker.sock ]; then
+    sudo chmod 666 /var/run/docker.sock
+else
+    echo "⚠️ O socket /var/run/docker.sock ainda não existe. Será criado quando o daemon iniciar."
+fi
+
+# ===== Reforçar reinicialização do systemd e Docker =====
+echo "🔄 Reiniciando systemd e serviços Docker..."
+sudo systemctl daemon-reexec
+sudo systemctl restart docker
+sudo systemctl restart containerd
 
 # ===== Testar instalação =====
 echo "🔍 Testando instalação do Docker..."
@@ -133,3 +153,13 @@ if [[ "$resposta" =~ ^[Ss]$ ]]; then
 else
     echo "❌ Geração da chave SSH cancelada."
 fi
+
+echo ""
+echo "🎉 Instalação concluída! Execute o comando abaixo no PowerShell para reiniciar o WSL:"
+echo "    wsl --shutdown"
+echo ""
+echo "Depois reabra o Ubuntu e teste com:"
+echo "    docker ps"
+echo "    docker run hello-world"
+echo ""
+echo "🚀 Docker totalmente configurado para WSL2 com systemd nativo!"
